@@ -1,7 +1,1 @@
-# slides
-Potato4d's Slides
-
-
-# LICENSE
-
-Allow only me.
+個人利用目的につき二次利用禁止
