@@ -23,6 +23,17 @@ pre[class*='language-'] {
   font-size: 2rem;
 }
 
+.text-fixed-right {
+  position: absolute;
+  right: 2em;
+  bottom: 2em;
+  text-align: right;
+}
+
+.text-center {
+  text-align: center;
+}
+
 a {
   /* set the default link color */
   color: var(--color-cyan);
@@ -33,4 +44,26 @@ a {
 }
 
 .title {
+}
+
+li {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  line-height: 1.0;
+}
+
+.detail h2 {
+  text-align: left;
+  padding-bottom: 1em;
+}
+
+.detail ul {
+  margin-left: 0;
+}
+
+.detail {
+  align-items: flex-start;
+  justify-content: flex-start !important;
+  padding-top: 4em;
+  padding-bottom: 4em;
 }

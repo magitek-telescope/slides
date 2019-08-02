@@ -5,5 +5,8 @@
   "license": "MIT",
   "devDependencies": {
     "fusuma": "^1.14.0"
+  },
+  "dependencies": {
+    "@fusuma/task-pdf": "^1.14.1"
   }
 }

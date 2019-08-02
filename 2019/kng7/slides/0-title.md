@@ -13,7 +13,8 @@
 - 花谷拓磨(@potato4d)
 - Working at...
   - LINE株式会社 UIT室 / Developer Relations室
--
+- 今日は東京から来ました
+  - 昨日は [Serverless Meetup Osaka #5](https://serverless.connpass.com/event/137122/) で<br/>フル Firebase Functions アプリを Firestore へと移行した記録の話をしてきました
 
 ---
 
@@ -21,7 +22,7 @@
 
 - 結局俺たちは O/R Mapper に何を求めているのか
 - TypeScript ベースで「ちょうどいい」 TypeORM の紹介
-  - ActiveRecord パターンと Repositoryパターンの段階的な移行が可能
+- TypeORM の活用シチュエーション
 
 ---
 
@@ -37,21 +38,24 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## 結局俺たちは O/R Mapper に何を求めているのか
 
-### ORM を使うなら ActiveRecord で雑に作りたい
+### 1. ORM を使うなら ActiveRecord で雑に作りたい
 
 - 開発初期はデータ構造やリレーションにドラスティックな変更が入りやすい
   - できれば高速に対処したい
 - 初期の CRUD くらいは爆速で作ってしまいたい
   - プロトタイピングの速度は落としたくない
--
 
 ---
 
+<!-- classes: detail -->
+
 ## 結局俺たちは O/R Mapper に何を求めているのか
 
-### ActiveRecord で作ったものをメンテし続けたくない
+### 2. ActiveRecord で作ったものをメンテし続けたくない
 
 - とはいえ継続的に Model = DB みたいな状態で運用したくない
   - この辺りが年季の入った Rails が嫌われやすい点な気がする
@@ -61,12 +65,20 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## 結局俺たちは O/R Mapper に何を求めているのか
 
-### 気合を入れたり入れなかったりしたい
+### 3. 可能な限り力の入れ加減をコントロールしたい
 
-- はじめは雑に作れると嬉しい
-- 徐々にしっかりしていくことが不可能だと嬉しくない
+- ゼロベースで何かを作っていく段階
+  - 多少密結合でも生産性を高めたい
+  - アプリケーションコードから柔軟に DB の設計に手を入れられると良い
+- 継続的にメンテナンスしていく段階
+  - アプリケーション側のエンティティのスキーマ定義もかっちりしたい
+  - ドメイン上の概念とデータベースアクセスはある程度疎結合にしたい
+  - Node.js の ORM はマイグレーション弱めだけどしっかり管理したい
+  - etc..
 
 ---
 
@@ -82,6 +94,8 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## TypeORM の特徴
 
 - TypeScript 向けの ORM (JavaScript 対応)
@@ -92,47 +106,148 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## TypeORM の特徴
 
-- デコレータベースの簡潔かつ TypeSafe なエンティティ定義と
+1. デコレータベースの簡潔かつ TypeSafe なエンティティ定義
+2. 柔軟かつ便利な Migration
+3. ActiveRecord と Repository にどちらも対応
+
+---
+
+<!-- classes: detail -->
+
+## TypeORM のうれしいところ
+
+- デコレータベースの簡潔かつ TypeSafe なエンティティ定義
+  - `@Entity` から始まってクラスに対してデコレータで情報を付与していくだけ
+  - 勿論 TypeScript 自体の型の定義と相互作用があり、メタデータによって型定義ベースでの動作指定が可能
+  - `@Column` のオプションも全て型がついている
+    - それもそのはず TypeORM は全て TypeScript で記述されている
+
+---
+
+<!-- classes: detail -->
+
+## TypeORM のうれしいところ
+
+```ts
+import {Entity, PrimaryGeneratedColumn, Column, BaseEntity} from "typeorm";
+
+@Entity()
+export class User extends BaseEntity {
+
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    firstName: string;
+
+    @Column()
+    lastName: string;
+
+    @Column()
+    age: number;
+
+}
+```
+
+---
+
+<!-- classes: detail -->
+
+## TypeORM のうれしいところ
+
 - 柔軟かつ便利な Migration
+  - 自動マイグレーションと手動マイグレーションの 2 つのモードが有る
+  - 自動マイグレーションは開発時に便利
+    - `@Entity` の定義と DB の差分をみて自動でマイグレーション
+    - 設計と実装にブレがあった場合に実装側で試行錯誤しやすい
+    - 初期の開発において悩みどころが少ない、多少古い情報を共有されても実行時でなんとかなる
+  - 手動マイグレーションは完成品のコードとして便利
+    - TypeORM の CLI にはマイグレーションのコマンドが一通り揃っている
+    - マージする時は必ずマイグレーションファイルに落とし込んで適用みたいに柔軟な形に落とし込みやすい
+
+---
+
+## Use manual migration
+
+```bash
+$ typeorm migration:generate -n PostRefactoring # Create migration file
+$ typeorm migration:run # Execute migration
+$ typeorm migration:revert # Revert migration
+```
+
+---
+
+## Use automatic migration
+
+```bash
+$ yarn dev
+yarn run v1.15.2
+warning package.json: No license field
+$ ts-node src/server.ts
+Listen on http://0.0.0.0:8000
+query: START TRANSACTION
+query: SELECT DATABASE() AS `db_name`
+query: SELECT * FROM `INFORMATION_SCHEMA`.`TABLES` WHERE (`TABLE_SCHEMA` = 'podcast' OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'casts') OR (`TABLE_SCHEMA` = 'podcast' ) OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'pageviews') OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'episodes') OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'episodes_casts_casts')
+query: SELECT * FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE (`TABLE_SCHEMA` = 'podcast' OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'casts') OR (`TABLE_SCHEMA` = 'podcast' ) OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'pageviews') OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'episodes') OR (`TABLE_SCHEMA` = 'podcast' AND `TABLE_NAME` = 'episodes_casts_casts')
+```
+
+---
+
+<!-- classes: detail -->
+
+## TypeORM のうれしいところ
+
 - ActiveRecord と Repository にどちらも対応
-
----
-
-## TypeORM のうれしいところ
-
-- デコレータベースの簡潔かつ TypeSafe なエンティティ定義と
-
----
-
-## TypeORM のうれしいところ
-
-- 柔軟かつ便利な Migration
-
----
-
-## TypeORM のうれしいところ
-
-- ActiveRecord と Repository にどちらも対応
+  - 先程述べた「ActiveRecordメンテしたくない問題」を解消できる
+  - 一方で早すぎる最適化が起こるわけでもなく、柔軟に対応しやすい
 
 ---
 
 ## TypeORM の活用シチュエーション
 
 ---
+
+## <img width="800" src="https://user-images.githubusercontent.com/6993514/62269676-b655f680-b46e-11e9-89a6-55d04e26c671.png"/>
+
+##### 3 月に立ち上げた Podcast サイトで使ってます
+
+<p class="text-center">
+  <br/>
+  <a href="https://uit-inside.linecorp.com/">https://uit-inside.linecorp.com/</a>
+</p>
+
+---
+
+<!-- classes: detail -->
+
+## TypeORM の活用シチュエーション
+
+- すみません！あんまりUIT室内では使ってません。
+  - Node.js バックエンドの仕事がある現場だと重宝します
+
+---
+
+<!-- classes: detail -->
 
 ## TypeORM の活用シチュエーション
 
 - LINE UIT室の場合
   - Podcast UIT INSIDE の API サーバーで使っています
 - UIT INSIDE の立ち上げ時の場合
+  - とりあえずクリティカルではないのでサクッと立ち上げたい
+    - とはいえ CMS を組みたいので静的サイトだとちょっと具合が悪い
   - Express + TypeORM で TypeScript な Node.js サーバーを運用
   - 初期リリースまでは高生産性の恩恵を存分に受ける
     - 公開前までは自動マイグレーションで開発
     - データモデルは極力 ActiveRecord で実装
 
 ---
+
+<!-- classes: detail -->
 
 ## TypeORM の活用シチュエーション
 
@@ -149,6 +264,8 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## おわりに
 
 - TypeORM はプロダクトと共に成長していける手軽な ORM
@@ -158,8 +275,22 @@
 
 ---
 
+<!-- classes: detail -->
+
 ## おわりに
 
 - ORM 好き派嫌い派みたいな概念は必要ない
   - 好き嫌いじゃなくているか要らないかで選ぶんだよ
   - ORM というざっくりしたものではなくて何が不満で何が便利化を言語化してみる
+
+---
+
+<!-- classes: title -->
+
+## Thank you!
+
+<div className="text-fixed-right">
+  <small>
+    Slide generated by <a href="https://github.com/hiroppy/fusuma">hiroppy/fusuma</a>
+  </small>
+</div>
